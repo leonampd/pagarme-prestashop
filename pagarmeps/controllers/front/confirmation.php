@@ -44,6 +44,7 @@ class PagarmepsConfirmationModuleFrontController extends PagarmepsOrderModuleFro
 
         $prestashop_order_status = ($posted_data['payment_way'] == 'boleto') ? Pagarmeps::getStatusId("waiting_payment") : Pagarmeps::getStatusId("processing");
         $payment_method_name = $this->getPaymentMethodName($posted_data);
+        $this->generateTransactionAmount($posted_data);
 
         $this->module->validateOrder(
             $cart->id,
@@ -189,7 +190,7 @@ class PagarmepsConfirmationModuleFrontController extends PagarmepsOrderModuleFro
             $transaction_data['payment_method'] = 'boleto';
         }
 
-        $transaction_data['amount'] = $this->generateTransactionAmount($data);
+        $transaction_data['amount'] = $cart->getOrderTotal() * 100;
         $transaction_data['postback_url'] = _PS_BASE_URL_ .__PS_BASE_URI__.'module/pagarmeps/postback';
 
         $transaction_data['customer'] = $this->getCustomerData($cart);
@@ -274,7 +275,7 @@ class PagarmepsConfirmationModuleFrontController extends PagarmepsOrderModuleFro
         }
 
         foreach ($this->context->cart->getCartRules() as $cart_rule) {
-            if ($cart_rule['description'] == 'discount_boleto') {
+            if ($cart_rule->description == 'discount_boleto') {
                 return $this;
             }
         }
@@ -306,8 +307,8 @@ class PagarmepsConfirmationModuleFrontController extends PagarmepsOrderModuleFro
         $cart_rule->product_restriction = 0;
         $cart_rule->shop_restriction = 0;
         $cart_rule->free_shipping = 0;
-        #$cart_rule->reduction_percent = Configuration::get('PAGARME_DISCOUNT_BOLETO');
-        $cart_rule->reduction_amount = $this->calculateBoletoDiscountAmount();
+        $cart_rule->reduction_percent = Configuration::get('PAGARME_DISCOUNT_BOLETO');
+        #$cart_rule->reduction_amount = $this->calculateBoletoDiscountAmount();
         $cart_rule->reduction_tax = 1;
         $cart_rule->reduction_currency = 1;
         $cart_rule->reduction_product = 0;
